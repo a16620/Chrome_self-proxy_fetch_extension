@@ -8,12 +8,8 @@ function normalizePath(url) {
   return u.origin + u.pathname;
 }
 
-function getWhitelist() {
-  return chrome.storage.local.get(WHITELIST_KEY).then((res) => res[WHITELIST_KEY] ?? []);
-}
-
-function setWhitelist(list) {
-  return chrome.storage.local.set({ [WHITELIST_KEY]: list });
+function makeMatchURLs(url) {
+  return [url, url+'?*', url+'#*'];
 }
 
 async function getCurrentPath() {
@@ -22,71 +18,77 @@ async function getCurrentPath() {
   try {
     return normalizePath(tab.url);
   } catch {
-    return null; // chrome:// 같은 내부 페이지
+    return null;
   }
 }
 
-async function render() {
-  const currentPath = await getCurrentPath();
-  const whitelist = await getWhitelist();
+async function isGrantOrigin(path) {
+  const wl = (await chrome.storage.local.get(WHITELIST_KEY))[WHITELIST_KEY] ?? [];
+  return wl.includes(path);
+}
 
-  // 현재 페이지 표시 + 토글 버튼
-  const pathEl = document.getElementById("current-path");
-  const toggleBtn = document.getElementById("toggle-current-btn");
+async function requestGrantOrigin(path) {
+  try {
+    const wl = (await chrome.storage.local.get(WHITELIST_KEY))[WHITELIST_KEY] ?? [];
+    if (wl.includes(path)) {
+      return true;
+    }
 
-  if (!currentPath || !currentPath.startsWith("file:///")) {
-    pathEl.textContent = "이 페이지는 등록할 수 없습니다.";
-    toggleBtn.style.display = "none";
-  } else {
-    pathEl.textContent = currentPath;
-    toggleBtn.style.display = "block";
-    const isIn = whitelist.includes(currentPath);
-    toggleBtn.textContent = isIn ? "화이트리스트에서 제거" : "화이트리스트에 추가";
-    toggleBtn.className = isIn ? "remove" : "add";
-  }
-
-  // 목록 렌더링
-  const ul = document.getElementById("whitelist");
-  const emptyMsg = document.getElementById("empty-msg");
-  ul.innerHTML = "";
-
-  if (whitelist.length === 0) {
-    emptyMsg.style.display = "block";
-  } else {
-    emptyMsg.style.display = "none";
-    whitelist.forEach((path) => {
-      const li = document.createElement("li");
-
-      const span = document.createElement("span");
-      span.textContent = path;
-      span.title = path;
-
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "제거";
-      removeBtn.addEventListener("click", async () => {
-        const list = await getWhitelist();
-        await setWhitelist(list.filter((p) => p !== path));
-        render();
-      });
-
-      li.appendChild(span);
-      li.appendChild(removeBtn);
-      ul.appendChild(li);
+    await chrome.storage.local.set({
+      [WHITELIST_KEY]: [...wl, path]
     });
+    
+    console.log((await chrome.storage.local.get(WHITELIST_KEY))[WHITELIST_KEY])
+
+    return true;
+  } catch (err) {
+    return false;
   }
 }
 
-document.getElementById("toggle-current-btn").addEventListener("click", async () => {
-  const currentPath = await getCurrentPath();
-  if (!currentPath) return;
+async function removeGrantOrigin(path) {
+  const HOOK_BRIDGE = 'hook-bridge-', HOOK_IINJECTION = 'hook-inject-';
+  try {
+    await chrome.scripting.unregisterContentScripts({ids: [HOOK_BRIDGE+path, HOOK_IINJECTION+path]});
+  } catch (error) {
+    //스크립트가 등록 안된 경우에 오류 발생 => 그냥 무시
+  }
 
-  const list = await getWhitelist();
-  const isIn = list.includes(currentPath);
-  const updated = isIn ? list.filter((p) => p !== currentPath) : [...list, currentPath];
+  const wl = (await chrome.storage.local.get(WHITELIST_KEY))[WHITELIST_KEY] ?? [];
+  await chrome.storage.local.set({
+    [WHITELIST_KEY]: wl.filter((p) => p !== path)
+  });
+}
 
-  await setWhitelist(updated);
-  render();
-});
+async function registerScript(path) {
+  const HOOK_BRIDGE = 'hook-bridge-', HOOK_IINJECTION = 'hook-inject-';
+  const script = await chrome.scripting.getRegisteredContentScripts({ids: [HOOK_BRIDGE+path, HOOK_IINJECTION+path]});
+  if (script.length > 0) {
+    return;
+  }
+
+  const match = makeMatchURLs(path);
+  return await chrome.scripting.registerContentScripts([
+    {
+      "id": HOOK_BRIDGE+path,
+      "matches": match,
+      "js": ["./api/bridge.js"],
+      "runAt": "document_end",
+      "world": "ISOLATED"
+    },
+    {
+      "id": HOOK_IINJECTION+path,
+      "matches": match,
+      "js": ["./api/api-injection.js"],
+      "runAt": "document_end",
+      "world": "MAIN"
+    }
+  ]);
+}
+
+async function getWhiteList() {
+  return (await chrome.permissions.getAll()).origins ?? [];
+}
 
 async function initSettings() {
   const res = await chrome.storage.local.get([ENABLE_KEY, MODE_KEY, INJ_NAMESPACE_KEY]);
@@ -127,5 +129,112 @@ async function initSettings() {
   });
 }
 
+
+async function renderToggle() {
+  const currentPath = await getCurrentPath();
+  const grant = await isGrantOrigin(currentPath);
+
+  const notAvilableEl = document.getElementById("current-script-not-available");
+  const toggleBtn = document.getElementById("toggle-current-btn");
+
+  if (!currentPath || !currentPath.startsWith("file:///")) {
+    notAvilableEl.style.display = '';
+    toggleBtn.style.display = 'none';
+  } else {
+    notAvilableEl.style.display = 'none';
+    toggleBtn.style.display = '';
+
+    toggleBtn.textContent = grant ? "Fetch 제거" : "Fetch 등록";
+    toggleBtn.className = grant ? "remove" : "add";
+  }
+}
+
+document.getElementById("toggle-current-btn").addEventListener("click", async () => {
+  const currentPath = await getCurrentPath();
+  if (!currentPath) return;
+
+  const grant = await isGrantOrigin(currentPath);
+
+  if (grant) {
+    await removeGrantOrigin(currentPath);
+  } else {
+    if (!await requestGrantOrigin(currentPath)) {
+      alert('등록 실패')
+      return;
+    }
+    await registerScript(currentPath);
+  }
+  renderToggle();
+});
+
+async function renderWhitelist() {
+  const ul = document.getElementById("whitelist");
+  const emptyMsg = document.getElementById("empty-msg");
+  ul.innerHTML = "";
+
+  const whitelist = (await getWhiteList())
+  .filter((path)=>!path.startsWith("file:///"));
+
+  if (whitelist.length === 0) {
+    emptyMsg.style.display = '';
+  } else {
+    emptyMsg.style.display = "none";
+    whitelist.forEach((path) => {
+      const li = document.createElement("li");
+
+      const span = document.createElement("span");
+      span.textContent = path;
+      span.title = path;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "제거";
+      removeBtn.addEventListener("click", async () => {
+        await chrome.permissions.remove({
+          origins: [path]
+        });
+        
+        renderWhitelist();
+      });
+
+      li.appendChild(span);
+      li.appendChild(removeBtn);
+      ul.appendChild(li);
+    });
+  }
+}
+
+document.getElementById("button-api-register").addEventListener('click', async()=>{
+  const input = document.getElementById("input-api-register");
+  let url;
+  try {
+    url = new URL(input.value);
+  } catch (error) {
+    alert('URL 형식이 잘못 되었습니다');
+    return;
+  }
+
+  if (url.origin.startsWith('file:///')) {
+    alert('원격 서버 주소를 입력하세요');
+    return;
+  }
+
+  const grant = await chrome.permissions.request({
+    origins: [url.origin + '/*']
+  });
+
+  if (!grant) {
+    alert('권한이 거부되었습니다');
+    return;
+  }
+
+  input.value = '';
+  renderWhitelist();
+});
+
 initSettings();
-render();
+renderToggle();
+renderWhitelist();
+
+chrome.scripting.getRegisteredContentScripts().then((scripts)=>{
+  console.table(scripts)
+})

@@ -1,4 +1,34 @@
 (async ()=>{
+    const wait_ready = (meta) => {
+        return new Promise((resolve)=>{
+            if (!meta) {
+                resolve(false);
+            }
+
+            const observer = new MutationObserver(()=>{
+                if (meta.getAttribute('content') === 'ready') {
+                    observer.disconnect();
+                    resolve(true);
+                }
+            });
+
+            observer.observe(meta, {
+                attributes: true,
+                attributeFilter: ['content']
+            });
+
+            if (meta.getAttribute('content') === 'ready') {
+                observer.disconnect();
+                resolve(true);
+            }
+        });
+    }
+
+    const meta = document.querySelector('meta[name="api-helper"]');
+    if (!await wait_ready(meta)) {
+        return;
+    }
+
     const bridge_message = (type, content) => new Promise((resolve, reject)=>{
         const req_id = crypto.randomUUID();
         
@@ -31,16 +61,13 @@
     const INJ_NAMESPACE_KEY = "injection_name";
 
     const extension_config = await bridge_message('options', [ENABLE_KEY, MODE_KEY, INJ_NAMESPACE_KEY]);
-    
+
     if (!extension_config[ENABLE_KEY]) {
         return;
     }
 
-    const meta = document.querySelector('meta[name="api-helper"][content="enable"]');
-    if (!meta) {
-        return;
-    }
-
+    
+    
     const injection_mode = extension_config[MODE_KEY] ?? 'container',
             injection_name = extension_config[INJ_NAMESPACE_KEY] ?? 'myAPI';
     if (injection_mode === 'override') {

@@ -1,23 +1,10 @@
 const WHITELIST_KEY = "whitelist";
-const api_white_list = new Set(["dummyjson.com", "water.nier.go.kr"]);
 
-const normalizePath = (url) => {
-  const u = new URL(url);
-  return u.origin + u.pathname;
+const sender_is_in_white_list = async (sender) => {
+  return await chrome.permissions.contains({permissions:['scripting']});
 }
 
-async function sender_is_in_white_list(sender) {
-  const res = await chrome.storage.local.get(WHITELIST_KEY);
-  const whitelist = res[WHITELIST_KEY] ?? [];
-
-  try {
-    return whitelist.includes(normalizePath(sender.url));
-  } catch {
-    return false;
-  }
-}
-
-const api_is_in_white_list = (url) => {
+const api_is_in_white_list = async (url) => {
 	if (typeof url !== 'string' && !(url instanceof String)) {
 		return false;
 	}
@@ -26,8 +13,10 @@ const api_is_in_white_list = (url) => {
 		url = "http://" + url;
 	}
 
-	const url_information = new URL(url);
-	return api_white_list.has(url_information.host);
+	const api_target = (new URL(url)).origin+'/*';
+    return await chrome.permissions.contains({
+        origins: [api_target]
+    });
 }
 
 const handle_request = async (message, sender) => {
@@ -37,7 +26,7 @@ const handle_request = async (message, sender) => {
 	}
 
 	const { url, options=null } = message;
-	if (!api_is_in_white_list(url)) {
+	if (!await api_is_in_white_list(url)) {
 		throw "허용되지 않은 api입니다.";
 	}
 

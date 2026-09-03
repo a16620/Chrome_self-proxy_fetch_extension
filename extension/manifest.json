@@ -1,28 +1,14 @@
 {
   "name": "API 호출기",
   "description": "API CORS우회 호출을 위한 프로그램",
-  "version": "1.0",
+  "version": "2.0",
   "manifest_version": 3,
   "action": {
     "default_popup": "popup/popup.html"
   },
-  "content_scripts": [
-    {
-      "matches": ["file:///*"],
-      "js": ["api/bridge.js"],
-      "run_at": "document_start",
-      "world": "ISOLATED"
-    },
-    {
-      "matches": ["file:///*"],
-      "js": ["api/api-injection.js"],
-      "run_at": "document_end",
-      "world": "MAIN"
-    }
-  ],
   "background": {
     "service_worker": "api/background.js"
   },
-  "permissions" : ["storage", "activeTab"],
-  "host_permissions": []
+  "permissions" : ["storage", "activeTab", "scripting"],
+  "optional_host_permissions": ["<all_urls>"]
 }

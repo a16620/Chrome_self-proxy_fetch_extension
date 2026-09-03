@@ -1,14 +1,15 @@
-const WHITELIST_KEY = "whitelist";
 const ENABLE_KEY = "enable";
+const WHITELIST_KEY = "whitelist";
 
 const normalizePath = (url) => {
   const u = new URL(url);
   return u.origin + u.pathname;
 }
 
-chrome.storage.local.get([WHITELIST_KEY, ENABLE_KEY]).then((config)=>{
+chrome.storage.local.get([ENABLE_KEY, WHITELIST_KEY]).then((config)=>{
+    const meta = document.querySelector('meta[name="api-helper"]');
 
-    if (!config[ENABLE_KEY] || !config[WHITELIST_KEY].includes(normalizePath(location.href))) {
+    if (!meta || !config[ENABLE_KEY] || !(config[WHITELIST_KEY] ?? []).includes(normalizePath(location.href))) {
         return;
     }
 
@@ -37,4 +38,5 @@ chrome.storage.local.get([WHITELIST_KEY, ENABLE_KEY]).then((config)=>{
         }
     });
 
+    meta.setAttribute('content', 'ready');
 });

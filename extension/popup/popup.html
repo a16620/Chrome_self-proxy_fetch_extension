@@ -30,21 +30,30 @@
       margin: 0 0 8px;
       font-size: 13px;
     }
-    #current-path {
-      font-size: 12px;
-      font-family: monospace;
-      background: #f0f0f0;
-      padding: 8px;
-      border-radius: 4px;
-      word-break: break-all;
-      margin-bottom: 8px;
+
+    h4 {
+      margin: 0 0 8px;
+      font-size: 11px;
     }
+
+    #current-script-not-available {
+      text-align: center;
+      border-radius: 4px;
+      padding: 5px 0px 5px 0px;;
+
+      color: white;
+      background-color: crimson;
+    }
+
+    button {
+      border-radius: 4px;
+      border: none;
+    }
+
     #toggle-current-btn {
       width: 100%;
       padding: 8px;
       cursor: pointer;
-      border: none;
-      border-radius: 4px;
       font-size: 13px;
     }
     #toggle-current-btn.add {
@@ -89,6 +98,27 @@
       color: #888;
       padding: 8px 0;
     }
+
+    p {
+      white-space: nowrap;
+      margin: 0px;
+    }
+
+    input {
+      width: stretch;
+    }
+
+    #button-api-register {
+      white-space: nowrap;
+      width: fit-content;
+      padding: 3px 10px 3px 10px;
+      cursor: pointer;
+      font-size: 13px;
+
+      background: #2e7d32;
+      color: white;
+    }
+
   </style>
 </head>
 <body>
@@ -97,7 +127,7 @@
   <div class="settings-row">
     <label class="enable-label">
       <input type="checkbox" id="enable-toggle">
-      <span id="enable-label-text">활성화</span>
+      <p id="enable-label-text">활성화</p>
     </label>
     <div class="settings-row">
       <p>작동 모드:</p>
@@ -112,11 +142,17 @@
     <input id="input-extension-namespace" placeholder="myAPI">
   </div>
   <hr>
-  <h3>현재 페이지</h3>
-  <div id="current-path"></div>
+  <h3>현재 페이지에 권한 부여</h3>
+  <div id="current-script-not-available">사용 불가능한 페이지</div>
   <button id="toggle-current-btn"></button>
-
-  <h3 style="margin-top: 16px;">화이트리스트</h3>
+  <hr>
+  <h3 style="margin-top: 10px;">API 화이트리스트</h3>
+  <div class="settings-row">
+    <p>API 주소:</p>
+    <input id="input-api-register">
+    <button id="button-api-register">등록</button>
+  </div>
+  <h3 style="margin-top: 5px;">목록</h3>
   <div id="empty-msg" style="display: none;">등록된 경로가 없습니다.</div>
   <ul id="whitelist"></ul>
 
