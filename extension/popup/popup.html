@@ -8,12 +8,33 @@
       padding: 16px;
       font-family: -apple-system, sans-serif;
     }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+    h4 {
+      margin: 0 0 8px;
+      font-size: 11px;
+    }
+    p {
+      white-space: nowrap;
+      margin: 0px;
+    }
+    button {
+      border-radius: 4px;
+      border: none;
+    }
+    input {
+      width: stretch;
+    }
+
     .settings-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
     }
+
     .enable-label {
       display: flex;
       align-items: center;
@@ -26,29 +47,9 @@
       padding: 4px 6px;
       font-size: 12px;
     }
-    h3 {
-      margin: 0 0 8px;
-      font-size: 13px;
-    }
-
-    h4 {
-      margin: 0 0 8px;
-      font-size: 11px;
-    }
-
-    #current-script-not-available {
-      text-align: center;
-      border-radius: 4px;
-      padding: 5px 0px 5px 0px;;
-
-      color: white;
-      background-color: crimson;
-    }
-
-    button {
-      border-radius: 4px;
-      border: none;
-    }
+    #div-extension-namespace {
+      margin-top: 5px;
+    }    
 
     #toggle-current-btn {
       width: 100%;
@@ -64,6 +65,41 @@
       background: #c62828;
       color: white;
     }
+
+    #current-script-not-available {
+      text-align: center;
+      border-radius: 4px;
+      padding: 5px 0px 5px 0px;;
+
+      color: white;
+      background-color: crimson;
+    }
+
+    .button-reset {
+      display: inline-block;
+      text-decoration: none;
+      cursor: pointer;
+      
+      color: darkgrey;
+      font-size: 13px;
+    }
+
+    .button-reset:hover {
+      color: grey;
+      outline: none;
+    }
+
+    #button-api-register {
+      white-space: nowrap;
+      width: fit-content;
+      padding: 3px 10px 3px 10px;
+      cursor: pointer;
+      font-size: 13px;
+
+      background: #2e7d32;
+      color: white;
+    }
+
     ul#whitelist {
       list-style: none;
       padding: 0;
@@ -93,44 +129,11 @@
       cursor: pointer;
       font-size: 11px;
     }
+
     #empty-msg {
       font-size: 12px;
       color: #888;
       padding: 8px 0;
-    }
-
-    p {
-      white-space: nowrap;
-      margin: 0px;
-    }
-
-    input {
-      width: stretch;
-    }
-
-    #button-api-register {
-      white-space: nowrap;
-      width: fit-content;
-      padding: 3px 10px 3px 10px;
-      cursor: pointer;
-      font-size: 13px;
-
-      background: #2e7d32;
-      color: white;
-    }
-
-    .button-reset {
-      display: inline-block;
-      text-decoration: none;
-      cursor: pointer;
-      
-      color: darkgrey;
-      font-size: 13px;
-    }
-
-    .button-reset:hover {
-      color: grey;
-      outline: none;
     }
 
   </style>
@@ -147,7 +150,7 @@
       <p>작동 모드:</p>
       <select id="mode-select">
         <option value="container">추가 fetch 등록</option>
-        <option value="override">기본 fetch 덮어쓰기</option>
+        <option value="override">기본 fetch 덮어쓰기(위험)</option>
       </select>
     </div>
   </div>

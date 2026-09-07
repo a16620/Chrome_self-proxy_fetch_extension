@@ -174,7 +174,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     ul.innerHTML = "";
 
     const whitelist = (await getWhiteList())
-    .filter((path)=>!path.startsWith("file:///"));
+    .filter((path)=>!path.startsWith("file:///"))
+    .sort((a, b)=>{
+      const u1 = new URL(a), u2 = new URL(b);
+      if (u1.host == u2.host) {
+        return (u1.protocol > u2.protocol) ? 1 : -1;
+      }
+      return (u1.host > u2.host) ? 1 : -1;
+    });
 
     if (whitelist.length === 0) {
       emptyMsg.style.display = '';
@@ -204,11 +211,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     }
   }
 
-  document.getElementById("button-api-register").addEventListener('click', async()=>{
+  const register_api = async()=>{
     const input = document.getElementById("input-api-register");
     let url;
     try {
-      url = new URL(input.value);
+      if (!input.value.startsWith('http')) {
+        input.value = 'https://' + input.value.trim();
+      }
+      url = new URL(input.value.trim());
     } catch (error) {
       alert('URL 형식이 잘못 되었습니다');
       return;
@@ -230,6 +240,20 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
     input.value = '';
     renderWhitelist();
+  }
+
+  document.getElementById("button-api-register").addEventListener('click', register_api);
+  document.getElementById("input-api-register").addEventListener('keydown', async(event)=>{
+    if (event.key == 'Enter') {
+      await register_api();
+    }
+  });
+
+  document.getElementById("input-api-register").addEventListener('focusout', ()=>{
+    const input = document.getElementById("input-api-register");
+    if (!input.value.startsWith('http') && input.value.trim().length > 0) {
+      input.value = 'https://' + input.value.trim();
+    }
   });
 
   document.getElementById('button-reset-file-list').addEventListener('click', async ()=>{
@@ -242,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       const ids = registerd.map((src)=>src.id);
       await chrome.scripting.unregisterContentScripts({ids: ids});
     } catch (error) {
-      //스크립트가 등록 안된 경우에 오류 발생 => 그냥 무시
+      //스크립트가 등록 안된 경우에 오류 발생
       alert('실패');
     }
 
