@@ -8,6 +8,7 @@
             const observer = new MutationObserver(()=>{
                 if (meta.getAttribute('content') === 'ready') {
                     observer.disconnect();
+                    meta.setAttribute('content', 'attach');
                     resolve(true);
                 }
             });
@@ -19,6 +20,7 @@
 
             if (meta.getAttribute('content') === 'ready') {
                 observer.disconnect();
+                meta.setAttribute('content', 'attach');
                 resolve(true);
             }
         });

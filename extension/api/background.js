@@ -1,7 +1,13 @@
 const WHITELIST_KEY = "whitelist";
 
+ function normalizePath(url) {
+    const u = new URL(url);
+    return u.origin + u.pathname;
+}
+
 const sender_is_in_white_list = async (sender) => {
-  return await chrome.permissions.contains({permissions:['scripting']});
+	const wlist = (await chrome.storage.local.get(WHITELIST_KEY))[WHITELIST_KEY] ?? [];
+  	return (await chrome.permissions.contains({permissions:['scripting']})) && wlist.includes(normalizePath(sender.url));
 }
 
 const api_is_in_white_list = async (url) => {

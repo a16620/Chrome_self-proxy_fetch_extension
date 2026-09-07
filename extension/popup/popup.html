@@ -119,6 +119,20 @@
       color: white;
     }
 
+    .button-reset {
+      display: inline-block;
+      text-decoration: none;
+      cursor: pointer;
+      
+      color: darkgrey;
+      font-size: 13px;
+    }
+
+    .button-reset:hover {
+      color: grey;
+      outline: none;
+    }
+
   </style>
 </head>
 <body>
@@ -142,11 +156,17 @@
     <input id="input-extension-namespace" placeholder="myAPI">
   </div>
   <hr>
-  <h3>현재 페이지에 권한 부여</h3>
+  <div class="settings-row">
+      <h3>현재 페이지에 권한 부여</h3>
+    <a role="button" id="button-reset-file-list" class="button-reset">모두 해제</a>
+  </div>
   <div id="current-script-not-available">사용 불가능한 페이지</div>
   <button id="toggle-current-btn"></button>
   <hr>
-  <h3 style="margin-top: 10px;">API 화이트리스트</h3>
+  <div class="settings-row">
+    <h3 style="margin-top: 10px;">API 화이트리스트</h3>
+    <a role="button" id="button-reset-api-list" class="button-reset">초기화</a>
+  </div>
   <div class="settings-row">
     <p>API 주소:</p>
     <input id="input-api-register">
